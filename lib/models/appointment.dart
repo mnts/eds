@@ -1,7 +1,7 @@
-import 'package:app_fractal/index.dart';
+import 'package:fractal/index.dart';
 import 'package:color/color.dart';
 
-class MeetingCtrl<T extends MeetingFractal> extends PostCtrl<T> {
+class MeetingCtrl<T extends MeetingFractal> extends EventsCtrl<T> {
   MeetingCtrl({
     super.name = 'meeting',
     required super.make,
@@ -9,14 +9,15 @@ class MeetingCtrl<T extends MeetingFractal> extends PostCtrl<T> {
     required super.attributes,
   });
 
-  final icon = IconF(0xe23e);
+  //final icon = IconF(0xe23e);
 }
 
-class MeetingFractal extends PostFractal with Rewritable {
+class MeetingFractal<T extends EventFractal> extends EventFractal
+    with FlowF<T>, MF<String, T>, MFE<T>, Rewritable {
   static final controller = MeetingCtrl(
-    extend: PostFractal.controller,
+    extend: EventFractal.controller,
     make: (d) async {
-      final rq = NetworkFractal.request;
+      final rq = NetworkFractal.discover;
       final patient = await rq(d['patient']) as UserFractal;
       final dentist = await rq(d['dentist']) as UserFractal;
       return switch (d) {
@@ -31,21 +32,21 @@ class MeetingFractal extends PostFractal with Rewritable {
     attributes: [
       Attr(
         name: 'patient',
-        format: 'TEXT',
+        format: FormatF.text,
         isIndex: true,
       ),
       Attr(
         name: 'dentist',
-        format: 'TEXT',
+        format: FormatF.text,
         isIndex: true,
       ),
       Attr(
         name: 'since',
-        format: 'INTEGER',
+        format: FormatF.integer,
       ),
       Attr(
         name: 'minutes',
-        format: 'INTEGER',
+        format: FormatF.integer,
       ),
     ],
   );
@@ -55,13 +56,13 @@ class MeetingFractal extends PostFractal with Rewritable {
 
   String? notes;
 
-  static final map = MapF<MeetingFractal>();
+  static final storage = MapF<MeetingFractal>();
 
   static var _ready = false;
   static init() {
     if (_ready) return;
-    EventFractal.map.listen((f) {
-      if (f is MeetingFractal) map.complete(f.hash, f);
+    EventFractal.storage.listen((f) {
+      if (f is MeetingFractal) storage.associate(f.hash, f);
     });
     _ready = true;
   }
@@ -121,9 +122,9 @@ class MeetingFractal extends PostFractal with Rewritable {
   int c = 0;
   loadColor() {
     if (this['status'] case String statusHash) {
-      NetworkFractal.request(statusHash).then((f) {
+      NetworkFractal.discover(statusHash).then((f) {
         if (f case NodeFractal node) {
-          node.m.request('color').then((post) {
+          node.request('color').then((post) {
             c = int.parse(post.content);
             notifyListeners();
           });
@@ -133,43 +134,40 @@ class MeetingFractal extends PostFractal with Rewritable {
   }
 
   @override
-  operator [](String key) => switch (key) {
+  operator [](key) => switch (key) {
         'since' => since.millisecondsSinceEpoch ~/ 1000,
         'minutes' => minutes,
-        'patient' => patient.hash,
-        'dentist' => dentist.hash,
-        _ => super[key] ?? m[key]?.content,
+        'patient' => patient,
+        'dentist' => dentist,
+        _ => super[key] ?? sub[key]?.content,
       };
 
   @override
-  onWrite(f) async {
-    final ok = await super.onWrite(f);
-    if (ok) {
-      switch (f.attr) {
-        case 'status':
-          loadColor();
-        case 'minutes':
-          final val = int.tryParse(f.content);
-          if (val != null && minutes != val) {
-            controller.update({
-              'minutes': val,
-            }, id);
-            minutes = val;
-            notifyListeners();
-          }
-        case 'since':
-          final val = int.tryParse(f.content);
-          if (val != null && (since.millisecondsSinceEpoch ~/ 1000) != val) {
-            controller.update({
-              'since': val,
-            }, id);
-            since = DateTime.fromMillisecondsSinceEpoch(
-              val * 1000,
-            );
-            notifyListeners();
-          }
-      }
+  consume(f) async {
+    switch (f.name) {
+      case 'status':
+        loadColor();
+      case 'minutes':
+        final val = int.tryParse(f.content);
+        if (val != null && minutes != val) {
+          controller.updateDB({
+            'minutes': val,
+          }, id);
+          minutes = val;
+          notifyListeners();
+        }
+      case 'since':
+        final val = int.tryParse(f.content);
+        if (val != null && (since.millisecondsSinceEpoch ~/ 1000) != val) {
+          controller.updateDB({
+            'since': val,
+          }, id);
+          since = DateTime.fromMillisecondsSinceEpoch(
+            val * 1000,
+          );
+          notifyListeners();
+        }
     }
-    return ok;
+    super.consume(f);
   }
 }

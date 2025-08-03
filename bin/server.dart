@@ -1,9 +1,6 @@
 import 'dart:io';
-import 'package:app_fractal/index.dart';
+import 'package:fractal/index.dart';
 import 'package:ed/ed.dart';
-import 'package:fractal_base/fractals/device.dart';
-import 'package:fractal_server/fractal_server.dart';
-import 'package:fractal_socket/index.dart';
 import 'package:fractals2d/lib.dart';
 import 'package:currency_fractal/fractals/transaction.dart';
 import 'package:fractal_socket/client.dart';

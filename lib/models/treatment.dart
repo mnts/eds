@@ -1,4 +1,4 @@
-import 'package:signed_fractal/signed_fractal.dart';
+import 'package:fractal/index.dart';
 import 'procedure.dart';
 
 class TreatmentCtrl<T extends Treatment> extends EventsCtrl<T> {
@@ -10,7 +10,8 @@ class TreatmentCtrl<T extends Treatment> extends EventsCtrl<T> {
   });
 }
 
-class Treatment extends EventFractal with Rewritable {
+class Treatment<T extends EventFractal> extends EventFractal
+    with FlowF<T>, MF<String, T>, MFE<T>, Rewritable {
   static final controller = TreatmentCtrl(
     extend: EventFractal.controller,
     make: (d) => switch (d) {
@@ -18,19 +19,22 @@ class Treatment extends EventFractal with Rewritable {
       _ => throw ('wrong rewriter given')
     },
     attributes: <Attr>[
-      Attr(name: 'tooth', format: 'INTEGER', canNull: true),
-      Attr(name: 'time', format: 'INTEGER'),
-      Attr(name: 'surface', format: 'TEXT', canNull: true),
-      Attr(name: 'status', format: 'INTEGER'),
+      Attr(name: 'tooth', format: FormatF.integer, canNull: true),
+      Attr(name: 'time', format: FormatF.integer),
+      Attr(name: 'surface', format: FormatF.text, canNull: true),
+      Attr(name: 'status', format: FormatF.integer),
       Attr(
         name: 'price',
-        format: 'DOUBLE',
+        format: FormatF.real,
       ),
       Attr(
         name: 'user_id',
-        format: 'TEXT',
+        format: FormatF.text,
       ),
-      Attr(name: 'procedure', format: 'INTEGER'),
+      Attr(
+        name: 'procedure',
+        format: FormatF.integer,
+      ),
     ],
   );
 
@@ -47,9 +51,11 @@ class Treatment extends EventFractal with Rewritable {
   String user_id;
   bool checked = false;
 
+  /*
   static final all = TypeFilter<Treatment>(
     EventFractal.map,
   );
+  */
 
   Treatment({
     this.surface,
@@ -92,14 +98,11 @@ class Treatment extends EventFractal with Rewritable {
   final description = Writable();
 
   @override
-  onWrite(f) async {
-    final ok = await super.onWrite(f);
-    if (ok) {
-      switch (f.attr) {
-        case 'description':
-          description.value = f;
-      }
+  consume(f) async {
+    switch (f.name) {
+      case 'description':
+        description.value = f;
     }
-    return ok;
+    super.consume(f);
   }
 }

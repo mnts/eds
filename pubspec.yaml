@@ -11,14 +11,6 @@ dependencies:
   path: ^1.8.0
   fractal:
     path: '../../pub/fractal'
-  app_fractal:
-    path: '../../pub/app_fractal'
-  signed_fractal:
-    path: '../../pub/signed_fractal'
-  fractal_base:
-    path: '../../pub/fractal_base'
-  fractal_flutter:
-    path: '../../pub/fractal_flutter'
   currency_fractal:
     path: '../../pub/currency_fractal'
   color: ^3.0.0

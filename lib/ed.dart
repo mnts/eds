@@ -1,5 +1,5 @@
-import 'package:fractal/lib.dart';
-import 'package:signed_fractal/signed_fractal.dart';
+import 'package:fractal/index.dart';
+import 'package:fractal/index.dart';
 
 import 'models/appointment.dart';
 import 'models/treatment.dart';
